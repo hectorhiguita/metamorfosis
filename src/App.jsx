@@ -4,6 +4,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import Layout from './components/Layout'
 import LoginPage from './pages/LoginPage'
 import PublicDashboard from './pages/PublicDashboard'
+import InfoPage from './pages/InfoPage'
 import DashboardPage from './pages/student/DashboardPage'
 import PlantsPage from './pages/student/PlantsPage'
 import PlantDetailPage from './pages/student/PlantDetailPage'
@@ -150,8 +151,8 @@ function AppRoutes() {
         }
       />
 
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/" element={<InfoPage />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
 }
