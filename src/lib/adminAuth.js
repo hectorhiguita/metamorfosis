@@ -4,10 +4,8 @@ import { db } from './firebase'
 // Crea un usuario via REST API sin afectar la sesión del admin actual.
 // El SDK de Firebase cierra sesión al crear usuarios; la REST API no lo hace.
 export async function createStudentAccount({ displayName, email, password }) {
-  const apiKey = import.meta.env.VITE_FIREBASE_API_KEY
-
   const res = await fetch(
-    `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`,
+    `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyB8KkSdfS6FDBOKf4DcYRbPRpZ8gUUlfbg`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
