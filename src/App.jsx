@@ -10,6 +10,7 @@ import RegisterPage from './pages/student/RegisterPage'
 import ScoresPage from './pages/student/ScoresPage'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import StudentsPage from './pages/admin/StudentsPage'
+import AdminPlantsPage from './pages/admin/AdminPlantsPage'
 
 function AppRoutes() {
   return (
@@ -72,6 +73,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute requiredRole="admin">
             <Layout><StudentsPage /></Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/plants"
+        element={
+          <ProtectedRoute requiredRole="admin">
+            <Layout><AdminPlantsPage /></Layout>
           </ProtectedRoute>
         }
       />
