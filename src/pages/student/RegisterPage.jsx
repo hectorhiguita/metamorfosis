@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { collection, addDoc, getDocs, query, where, serverTimestamp, doc, updateDoc, increment } from 'firebase/firestore'
+import { collection, addDoc, getDocs, query, where, serverTimestamp, doc, setDoc, increment } from 'firebase/firestore'
 import { db } from '../../lib/firebase'
 import { useAuth } from '../../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
@@ -118,10 +118,18 @@ export default function RegisterPage() {
         createdAt: serverTimestamp(),
       })
 
-      // Sumar puntos al usuario
-      await updateDoc(doc(db, 'users', user.uid), {
-        points: increment(pointsEarned),
-      })
+      // Sumar puntos al usuario. setDoc con merge crea el documento de perfil
+      // si aún no existe (evita "No document to update").
+      await setDoc(
+        doc(db, 'users', user.uid),
+        {
+          points: increment(pointsEarned),
+          displayName: profile?.displayName ?? '',
+          email: user.email ?? '',
+          role: profile?.role ?? 'student',
+        },
+        { merge: true }
+      )
 
       setSuccess(true)
       setTimeout(() => navigate('/dashboard'), 2000)

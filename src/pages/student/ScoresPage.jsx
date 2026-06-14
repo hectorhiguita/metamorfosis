@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore'
+import { collection, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../../lib/firebase'
 import { useAuth } from '../../context/AuthContext'
 
@@ -10,10 +10,15 @@ export default function ScoresPage() {
 
   useEffect(() => {
     if (!user) return
+    // Filtramos por ownerId y ordenamos en el cliente para no requerir
+    // un índice compuesto (ownerId + createdAt) en Firestore.
     getDocs(
-      query(collection(db, 'logs'), where('ownerId', '==', user.uid), orderBy('createdAt', 'desc'))
+      query(collection(db, 'logs'), where('ownerId', '==', user.uid))
     ).then((snap) => {
-      setLogs(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
+      const items = snap.docs
+        .map((d) => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => (b.createdAt?.toMillis?.() ?? 0) - (a.createdAt?.toMillis?.() ?? 0))
+      setLogs(items)
       setLoading(false)
     })
   }, [user])

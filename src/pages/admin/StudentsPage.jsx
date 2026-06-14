@@ -4,11 +4,9 @@ import {
   getDocs,
   query,
   where,
-  orderBy,
   doc,
   updateDoc,
   deleteDoc,
-  serverTimestamp,
 } from 'firebase/firestore'
 import { db } from '../../lib/firebase'
 import { createStudentAccount } from '../../lib/adminAuth'
@@ -252,7 +250,9 @@ export default function StudentsPage() {
   const fetchStudents = useCallback(async () => {
     setLoading(true)
     const [usersSnap, plantsSnap, logsSnap] = await Promise.all([
-      getDocs(query(collection(db, 'users'), where('role', '==', 'student'), orderBy('displayName'))),
+      // Filtramos por role y ordenamos en el cliente para no requerir un
+      // índice compuesto (role + displayName) en Firestore.
+      getDocs(query(collection(db, 'users'), where('role', '==', 'student'))),
       getDocs(collection(db, 'plants')),
       getDocs(collection(db, 'logs')),
     ])
@@ -270,12 +270,14 @@ export default function StudentsPage() {
     })
 
     setStudents(
-      usersSnap.docs.map((d) => ({
-        id: d.id,
-        ...d.data(),
-        _plantsCount: plantsByOwner[d.id] ?? 0,
-        _logsCount: logsByOwner[d.id] ?? 0,
-      }))
+      usersSnap.docs
+        .map((d) => ({
+          id: d.id,
+          ...d.data(),
+          _plantsCount: plantsByOwner[d.id] ?? 0,
+          _logsCount: logsByOwner[d.id] ?? 0,
+        }))
+        .sort((a, b) => (a.displayName ?? '').localeCompare(b.displayName ?? ''))
     )
     setLoading(false)
   }, [])

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore'
+import { collection, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../../lib/firebase'
 import { useAuth } from '../../context/AuthContext'
 import { Link } from 'react-router-dom'
@@ -33,15 +33,16 @@ export default function DashboardPage() {
       )
       setPlants(plantsSnap.docs.map((d) => ({ id: d.id, ...d.data() })))
 
+      // Filtramos por ownerId y ordenamos/limitamos en el cliente para no
+      // requerir un índice compuesto (ownerId + createdAt) en Firestore.
       const logsSnap = await getDocs(
-        query(
-          collection(db, 'logs'),
-          where('ownerId', '==', user.uid),
-          orderBy('createdAt', 'desc'),
-          limit(5)
-        )
+        query(collection(db, 'logs'), where('ownerId', '==', user.uid))
       )
-      setRecentLogs(logsSnap.docs.map((d) => ({ id: d.id, ...d.data() })))
+      const recent = logsSnap.docs
+        .map((d) => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => (b.createdAt?.toMillis?.() ?? 0) - (a.createdAt?.toMillis?.() ?? 0))
+        .slice(0, 5)
+      setRecentLogs(recent)
       setLoading(false)
     }
     fetchData()
