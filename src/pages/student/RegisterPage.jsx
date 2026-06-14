@@ -127,7 +127,7 @@ export default function RegisterPage() {
       setTimeout(() => navigate('/dashboard'), 2000)
     } catch (err) {
       console.error(err)
-      alert('Error al guardar el registro. Intenta de nuevo.')
+      alert(`Error al guardar el registro: ${err.code ?? ''} ${err.message ?? err}`)
     } finally {
       setLoading(false)
     }
