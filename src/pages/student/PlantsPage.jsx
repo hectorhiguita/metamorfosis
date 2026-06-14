@@ -101,9 +101,10 @@ export default function PlantsPage() {
           {plants.map((plant) => {
             const lastLog = plantLogs[plant.id]
             return (
-              <div
+              <Link
                 key={plant.id}
-                className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5"
+                to={`/plants/${plant.id}`}
+                className="block bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 hover:border-green-400 dark:hover:border-green-600 hover:shadow-sm transition-colors"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div>
@@ -125,12 +126,12 @@ export default function PlantsPage() {
                         {lastLog.createdAt?.toDate?.().toLocaleDateString('es-CO')}
                       </span>
                     </div>
-                    {lastLog.height && (
-                      <p className="text-sm text-gray-600 dark:text-gray-300">📏 {lastLog.height} cm</p>
-                    )}
-                    {lastLog.leavesCount && (
-                      <p className="text-sm text-gray-600 dark:text-gray-300">🍃 {lastLog.leavesCount} hojas</p>
-                    )}
+                    <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-sm text-gray-600 dark:text-gray-300">
+                      {lastLog.height != null && <span>📏 {lastLog.height} cm</span>}
+                      {lastLog.leavesCount != null && <span>🍃 {lastLog.leavesCount}</span>}
+                      {lastLog.flowersCount != null && <span>🌸 {lastLog.flowersCount}</span>}
+                      {lastLog.eggsCount != null && <span>🥚 {lastLog.eggsCount}</span>}
+                    </div>
                     {lastLog.notes && (
                       <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 italic">
                         "{lastLog.notes}"
@@ -140,7 +141,7 @@ export default function PlantsPage() {
                 ) : (
                   <p className="text-xs text-gray-400">Sin registros aún</p>
                 )}
-              </div>
+              </Link>
             )
           })}
         </div>

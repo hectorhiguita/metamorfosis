@@ -5,6 +5,7 @@ import Layout from './components/Layout'
 import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/student/DashboardPage'
 import PlantsPage from './pages/student/PlantsPage'
+import PlantDetailPage from './pages/student/PlantDetailPage'
 import RegisterPage from './pages/student/RegisterPage'
 import ScoresPage from './pages/student/ScoresPage'
 import AdminDashboard from './pages/admin/AdminDashboard'
@@ -29,6 +30,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Layout><PlantsPage /></Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/plants/:plantId"
+        element={
+          <ProtectedRoute>
+            <Layout><PlantDetailPage /></Layout>
           </ProtectedRoute>
         }
       />
