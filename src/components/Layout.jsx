@@ -5,6 +5,7 @@ const studentNav = [
   { to: '/dashboard', label: 'Inicio', icon: '🏠' },
   { to: '/plants', label: 'Mis plantas', icon: '🌿' },
   { to: '/companeros', label: 'Compañeros', icon: '👥' },
+  { to: '/ciclo', label: 'Ciclo de vida', icon: '🦋' },
   { to: '/register', label: 'Nuevo registro', icon: '📝' },
   { to: '/scores', label: 'Mis puntos', icon: '⭐' },
 ]
@@ -13,6 +14,7 @@ const adminNav = [
   { to: '/admin', label: 'Resumen', icon: '📊' },
   { to: '/admin/students', label: 'Estudiantes', icon: '👥' },
   { to: '/admin/plants', label: 'Plantas', icon: '🌿' },
+  { to: '/admin/ciclo', label: 'Ciclo de vida', icon: '🦋' },
   { to: '/admin/sensors', label: 'Sensores', icon: '🌡️' },
 ]
 

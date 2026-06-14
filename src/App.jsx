@@ -8,11 +8,14 @@ import DashboardPage from './pages/student/DashboardPage'
 import PlantsPage from './pages/student/PlantsPage'
 import PlantDetailPage from './pages/student/PlantDetailPage'
 import ClassmatesPage from './pages/student/ClassmatesPage'
+import SpecimensPage from './pages/student/SpecimensPage'
+import SpecimenDetailPage from './pages/student/SpecimenDetailPage'
 import RegisterPage from './pages/student/RegisterPage'
 import ScoresPage from './pages/student/ScoresPage'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import StudentsPage from './pages/admin/StudentsPage'
 import AdminPlantsPage from './pages/admin/AdminPlantsPage'
+import AdminSpecimensPage from './pages/admin/AdminSpecimensPage'
 
 function AppRoutes() {
   return (
@@ -50,6 +53,22 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Layout><PlantDetailPage /></Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ciclo"
+        element={
+          <ProtectedRoute>
+            <Layout><SpecimensPage /></Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ciclo/:specimenId"
+        element={
+          <ProtectedRoute>
+            <Layout><SpecimenDetailPage /></Layout>
           </ProtectedRoute>
         }
       />
@@ -92,6 +111,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute requiredRole="admin">
             <Layout><AdminPlantsPage /></Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/ciclo"
+        element={
+          <ProtectedRoute requiredRole="admin">
+            <Layout><AdminSpecimensPage /></Layout>
           </ProtectedRoute>
         }
       />
