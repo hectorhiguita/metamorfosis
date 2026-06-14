@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../lib/firebase'
@@ -82,6 +82,12 @@ export default function LoginPage() {
             {loading ? 'Ingresando...' : 'Ingresar'}
           </button>
         </form>
+
+        <div className="text-center mt-6 pt-5 border-t border-gray-100 dark:border-gray-800">
+          <Link to="/publico" className="text-sm text-green-600 dark:text-green-400 hover:underline">
+            🦋 Ver dashboard público
+          </Link>
+        </div>
       </div>
     </div>
   )

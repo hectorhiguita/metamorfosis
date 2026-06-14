@@ -18,6 +18,7 @@ function StudentModal({ student, onClose, onSaved }) {
   const [form, setForm] = useState({
     displayName: student?.displayName ?? '',
     email: student?.email ?? '',
+    group: student?.group ?? '',
     password: '',
   })
   const [loading, setLoading] = useState(false)
@@ -33,12 +34,14 @@ function StudentModal({ student, onClose, onSaved }) {
       if (isEdit) {
         await updateDoc(doc(db, 'users', student.id), {
           displayName: form.displayName,
+          group: form.group,
         })
       } else {
         if (form.password.length < 6) throw new Error('La contraseña debe tener al menos 6 caracteres.')
         await createStudentAccount({
           displayName: form.displayName,
           email: form.email,
+          group: form.group,
           password: form.password,
         })
       }
@@ -95,6 +98,18 @@ function StudentModal({ student, onClose, onSaved }) {
             {isEdit && (
               <p className="text-xs text-gray-400 mt-1">El correo no se puede modificar.</p>
             )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Grupo / Salón
+            </label>
+            <input
+              value={form.group}
+              onChange={set('group')}
+              placeholder="Ej. 8A, 9B, Grupo 3..."
+              className="w-full px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
           </div>
 
           {!isEdit && (
@@ -203,6 +218,9 @@ function StudentRow({ student, onEdit, onDelete }) {
           <p className="text-xs text-gray-400">{student.email}</p>
         </div>
       </td>
+      <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
+        {student.group || '—'}
+      </td>
       <td className="px-4 py-3 text-center">
         <span className="text-sm font-semibold text-yellow-600 dark:text-yellow-400">
           ⭐ {student.points ?? 0}
@@ -244,6 +262,7 @@ export default function StudentsPage() {
   const [students, setStudents] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [groupFilter, setGroupFilter] = useState('')
   const [modal, setModal] = useState(null) // null | 'add' | { student } para editar
   const [deleteTarget, setDeleteTarget] = useState(null)
 
@@ -293,11 +312,19 @@ export default function StudentsPage() {
     fetchStudents()
   }
 
-  const filtered = students.filter(
-    (s) =>
-      s.displayName?.toLowerCase().includes(search.toLowerCase()) ||
-      s.email?.toLowerCase().includes(search.toLowerCase())
+  const groups = [...new Set(students.map((s) => s.group).filter(Boolean))].sort(
+    (a, b) => a.localeCompare(b)
   )
+
+  const filtered = students.filter((s) => {
+    const q = search.toLowerCase()
+    const matchesSearch =
+      s.displayName?.toLowerCase().includes(q) ||
+      s.email?.toLowerCase().includes(q) ||
+      s.group?.toLowerCase().includes(q)
+    const matchesGroup = !groupFilter || s.group === groupFilter
+    return matchesSearch && matchesGroup
+  })
 
   return (
     <div className="p-8 max-w-6xl mx-auto">
@@ -316,15 +343,23 @@ export default function StudentsPage() {
         </button>
       </div>
 
-      {/* Buscador */}
-      <div className="mb-4">
+      {/* Buscador y filtro por grupo */}
+      <div className="mb-4 flex flex-wrap gap-3">
         <input
           type="search"
-          placeholder="Buscar por nombre o correo..."
+          placeholder="Buscar por nombre, correo o grupo..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full sm:w-80 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+          className="flex-1 min-w-60 sm:max-w-80 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
         />
+        <select
+          value={groupFilter}
+          onChange={(e) => setGroupFilter(e.target.value)}
+          className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+        >
+          <option value="">Todos los grupos</option>
+          {groups.map((g) => <option key={g} value={g}>{g}</option>)}
+        </select>
       </div>
 
       {loading ? (
@@ -353,6 +388,7 @@ export default function StudentsPage() {
               <thead>
                 <tr className="bg-gray-50 dark:bg-gray-800/50 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                   <th className="px-4 py-3 text-left">Estudiante</th>
+                  <th className="px-4 py-3 text-left">Grupo</th>
                   <th className="px-4 py-3 text-center">Puntos</th>
                   <th className="px-4 py-3 text-center">Plantas</th>
                   <th className="px-4 py-3 text-center">Registros</th>

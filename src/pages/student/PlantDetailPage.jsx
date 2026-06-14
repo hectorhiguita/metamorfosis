@@ -37,7 +37,6 @@ export default function PlantDetailPage() {
   const { plantId } = useParams()
   const { user, profile } = useAuth()
   const isAdmin = profile?.role === 'admin'
-  const backTo = isAdmin ? '/admin/plants' : '/plants'
 
   const [plant, setPlant] = useState(null)
   const [logs, setLogs] = useState([])
@@ -55,8 +54,9 @@ export default function PlantDetailPage() {
     setError(null)
     try {
       const plantSnap = await getDoc(doc(db, 'plants', plantId))
-      // El admin puede ver cualquier planta; el estudiante solo las suyas.
-      if (!plantSnap.exists() || (!isAdmin && plantSnap.data().ownerId !== user.uid)) {
+      // Cualquier usuario autenticado puede ver cualquier planta (solo lectura);
+      // la edición se restringe al dueño más abajo.
+      if (!plantSnap.exists()) {
         setError('Planta no encontrada.')
         return
       }
@@ -77,7 +77,7 @@ export default function PlantDetailPage() {
     } finally {
       setLoading(false)
     }
-  }, [user, plantId, isAdmin])
+  }, [user, plantId])
 
   useEffect(() => { fetchData() }, [fetchData])
 
@@ -132,6 +132,9 @@ export default function PlantDetailPage() {
     }
   }
 
+  const isOwner = !!plant && plant.ownerId === user?.uid
+  const backTo = isAdmin ? '/admin/plants' : isOwner ? '/plants' : '/companeros'
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -163,12 +166,12 @@ export default function PlantDetailPage() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{plant.name}</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400 italic">{plant.type}</p>
-            {isAdmin && plant.ownerName && (
+            {!isOwner && plant.ownerName && (
               <p className="text-xs text-gray-400 mt-0.5">👤 {plant.ownerName}</p>
             )}
           </div>
         </div>
-        {!isAdmin && (
+        {isOwner && (
           <button
             onClick={() => { setShowForm((s) => !s); setFormError('') }}
             className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-lg transition-colors"
@@ -178,8 +181,8 @@ export default function PlantDetailPage() {
         )}
       </div>
 
-      {/* Formulario de seguimiento */}
-      {!isAdmin && showForm && (
+      {/* Formulario de seguimiento (solo el dueño) */}
+      {isOwner && showForm && (
         <form
           onSubmit={handleSubmit}
           className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 mb-6 space-y-4"

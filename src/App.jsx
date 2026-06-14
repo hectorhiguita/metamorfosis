@@ -3,9 +3,11 @@ import { AuthProvider } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import Layout from './components/Layout'
 import LoginPage from './pages/LoginPage'
+import PublicDashboard from './pages/PublicDashboard'
 import DashboardPage from './pages/student/DashboardPage'
 import PlantsPage from './pages/student/PlantsPage'
 import PlantDetailPage from './pages/student/PlantDetailPage'
+import ClassmatesPage from './pages/student/ClassmatesPage'
 import RegisterPage from './pages/student/RegisterPage'
 import ScoresPage from './pages/student/ScoresPage'
 import AdminDashboard from './pages/admin/AdminDashboard'
@@ -16,6 +18,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/publico" element={<PublicDashboard />} />
 
       {/* Rutas de estudiante */}
       <Route
@@ -31,6 +34,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Layout><PlantsPage /></Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/companeros"
+        element={
+          <ProtectedRoute>
+            <Layout><ClassmatesPage /></Layout>
           </ProtectedRoute>
         }
       />

@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 const studentNav = [
   { to: '/dashboard', label: 'Inicio', icon: '🏠' },
   { to: '/plants', label: 'Mis plantas', icon: '🌿' },
+  { to: '/companeros', label: 'Compañeros', icon: '👥' },
   { to: '/register', label: 'Nuevo registro', icon: '📝' },
   { to: '/scores', label: 'Mis puntos', icon: '⭐' },
 ]

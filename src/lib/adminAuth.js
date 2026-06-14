@@ -23,7 +23,7 @@ async function deleteAuthUser(idToken) {
 
 // Crea un usuario via REST API sin afectar la sesión del admin actual.
 // El SDK de Firebase cierra sesión al crear usuarios; la REST API no lo hace.
-export async function createStudentAccount({ displayName, email, password }) {
+export async function createStudentAccount({ displayName, email, password, group }) {
   const res = await fetch(
     `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${API_KEY}`,
     {
@@ -50,6 +50,7 @@ export async function createStudentAccount({ displayName, email, password }) {
     await setDoc(doc(db, 'users', data.localId), {
       displayName,
       email,
+      group: group ?? '',
       role: 'student',
       points: 0,
       createdAt: serverTimestamp(),
