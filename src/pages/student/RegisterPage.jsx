@@ -5,12 +5,15 @@ import { useAuth } from '../../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 
 const PLANT_TYPES = [
-  'Asclepias curassavica',
-  'Asclepias tuberosa',
-  'Passiflora edulis',
-  'Passiflora incarnata',
-  'Lantana camara',
-  'Stachytarpheta jamaicensis',
+  'Asclepia curassavica',
+  'Asclepia globo',
+  'Verbena morada',
+  'Girasol Mexicano',
+  'Buddleja davidii',
+  'Margarita Amarilla',
+  'Cosmos',
+  'Rosa',
+  'Toscana',
   'Otra hospedera',
   'Otra nectarífera',
 ]

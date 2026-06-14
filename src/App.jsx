@@ -10,12 +10,15 @@ import PlantDetailPage from './pages/student/PlantDetailPage'
 import ClassmatesPage from './pages/student/ClassmatesPage'
 import SpecimensPage from './pages/student/SpecimensPage'
 import SpecimenDetailPage from './pages/student/SpecimenDetailPage'
+import GardenPage from './pages/student/GardenPage'
+import GardenDetailPage from './pages/student/GardenDetailPage'
 import RegisterPage from './pages/student/RegisterPage'
 import ScoresPage from './pages/student/ScoresPage'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import StudentsPage from './pages/admin/StudentsPage'
 import AdminPlantsPage from './pages/admin/AdminPlantsPage'
 import AdminSpecimensPage from './pages/admin/AdminSpecimensPage'
+import AdminGardenPage from './pages/admin/AdminGardenPage'
 
 function AppRoutes() {
   return (
@@ -73,6 +76,22 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/huerta"
+        element={
+          <ProtectedRoute>
+            <Layout><GardenPage /></Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/huerta/:gardenId"
+        element={
+          <ProtectedRoute>
+            <Layout><GardenDetailPage /></Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/register"
         element={
           <ProtectedRoute>
@@ -119,6 +138,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute requiredRole="admin">
             <Layout><AdminSpecimensPage /></Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/huerta"
+        element={
+          <ProtectedRoute requiredRole="admin">
+            <Layout><AdminGardenPage /></Layout>
           </ProtectedRoute>
         }
       />

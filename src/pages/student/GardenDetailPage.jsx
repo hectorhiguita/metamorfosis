@@ -11,31 +11,25 @@ import {
   setDoc,
   serverTimestamp,
   increment,
-  Timestamp,
 } from 'firebase/firestore'
 import { db } from '../../lib/firebase'
 import { useAuth } from '../../context/AuthContext'
+import { todayStr, dateStrToTimestamp } from '../../lib/dates'
 import QrCodeCard from '../../components/QrCodeCard'
 
-const POINTS_PER_FOLLOWUP = 10
-
-// Fecha de hoy en formato yyyy-mm-dd respetando la zona horaria local.
-function todayStr() {
-  const d = new Date()
-  const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
-  return local.toISOString().slice(0, 10)
-}
+const POINTS_FOLLOWUP = 10
 
 const emptyForm = () => ({
   date: todayStr(),
   height: '',
   leavesCount: '',
   flowersCount: '',
-  eggsCount: '',
+  fruitsCount: '',
+  notes: '',
 })
 
-export default function PlantDetailPage() {
-  const { plantId } = useParams()
+export default function GardenDetailPage() {
+  const { gardenId } = useParams()
   const { user, profile } = useAuth()
   const isAdmin = profile?.role === 'admin'
 
@@ -54,19 +48,15 @@ export default function PlantDetailPage() {
     setLoading(true)
     setError(null)
     try {
-      const plantSnap = await getDoc(doc(db, 'plants', plantId))
-      // Cualquier usuario autenticado puede ver cualquier planta (solo lectura);
-      // la edición se restringe al dueño más abajo.
-      if (!plantSnap.exists()) {
+      const snap = await getDoc(doc(db, 'garden', gardenId))
+      if (!snap.exists()) {
         setError('Planta no encontrada.')
         return
       }
-      setPlant({ id: plantSnap.id, ...plantSnap.data() })
+      setPlant({ id: snap.id, ...snap.data() })
 
-      // Filtramos por plantId y ordenamos en el cliente para no requerir
-      // un índice compuesto (plantId + createdAt) en Firestore.
       const logsSnap = await getDocs(
-        query(collection(db, 'logs'), where('plantId', '==', plantId))
+        query(collection(db, 'gardenLogs'), where('gardenId', '==', gardenId))
       )
       const items = logsSnap.docs
         .map((d) => ({ id: d.id, ...d.data() }))
@@ -78,7 +68,7 @@ export default function PlantDetailPage() {
     } finally {
       setLoading(false)
     }
-  }, [user, plantId])
+  }, [user, gardenId])
 
   useEffect(() => { fetchData() }, [fetchData])
 
@@ -88,37 +78,28 @@ export default function PlantDetailPage() {
     e.preventDefault()
     if (!user || !plant) return
     setFormError('')
-    if (!form.date) {
-      setFormError('Elige la fecha del seguimiento.')
-      return
-    }
+    if (!form.date) { setFormError('Elige la fecha del seguimiento.'); return }
     setSaving(true)
     try {
-      // La fecha elegida se guarda en createdAt (al mediodía local para evitar
-      // saltos de día por zona horaria), así el historial y los demás módulos
-      // ordenan por la fecha de observación.
-      const [y, m, d] = form.date.split('-').map(Number)
-      const observedAt = Timestamp.fromDate(new Date(y, m - 1, d, 12, 0, 0))
-
-      await addDoc(collection(db, 'logs'), {
-        plantId: plant.id,
-        plantName: plant.name,
+      await addDoc(collection(db, 'gardenLogs'), {
+        gardenId: plant.id,
+        gardenName: plant.name,
         ownerId: user.uid,
         ownerName: profile?.displayName ?? '',
         height: form.height ? parseFloat(form.height) : null,
         leavesCount: form.leavesCount ? parseInt(form.leavesCount) : null,
         flowersCount: form.flowersCount ? parseInt(form.flowersCount) : null,
-        eggsCount: form.eggsCount ? parseInt(form.eggsCount) : null,
-        isFollowUp: true,
-        pointsEarned: POINTS_PER_FOLLOWUP,
-        createdAt: observedAt,
+        fruitsCount: form.fruitsCount ? parseInt(form.fruitsCount) : null,
+        notes: form.notes,
+        isInitial: false,
+        pointsEarned: POINTS_FOLLOWUP,
+        createdAt: dateStrToTimestamp(form.date),
         recordedAt: serverTimestamp(),
       })
 
-      // Sumar puntos al usuario (merge crea el perfil si no existiera).
       await setDoc(
         doc(db, 'users', user.uid),
-        { points: increment(POINTS_PER_FOLLOWUP) },
+        { points: increment(POINTS_FOLLOWUP) },
         { merge: true }
       )
 
@@ -134,7 +115,7 @@ export default function PlantDetailPage() {
   }
 
   const isOwner = !!plant && plant.ownerId === user?.uid
-  const backTo = isAdmin ? '/admin/plants' : isOwner ? '/plants' : '/companeros'
+  const backTo = isAdmin ? '/admin/huerta' : '/huerta'
 
   if (loading) {
     return (
@@ -157,16 +138,16 @@ export default function PlantDetailPage() {
   return (
     <div className="p-8 max-w-3xl mx-auto">
       <Link to={backTo} className="text-sm text-gray-500 hover:text-green-600 transition-colors">
-        ← {isAdmin ? 'Plantas' : 'Mis plantas'}
+        ← {isAdmin ? 'Huerta' : 'Mi huerta'}
       </Link>
 
-      {/* Encabezado de la planta */}
+      {/* Encabezado */}
       <div className="flex items-start justify-between mt-3 mb-6">
         <div className="flex items-center gap-3">
-          <span className="text-3xl">🌿</span>
+          <span className="text-3xl">🥕</span>
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{plant.name}</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 italic">{plant.type}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{plant.type}</p>
             {!isOwner && plant.ownerName && (
               <p className="text-xs text-gray-400 mt-0.5">👤 {plant.ownerName}</p>
             )}
@@ -183,7 +164,7 @@ export default function PlantDetailPage() {
       </div>
 
       {/* Código QR */}
-      <QrCodeCard path={`/plants/${plant.id}`} code={plant.id} />
+      <QrCodeCard path={`/huerta/${plant.id}`} code={plant.id} />
 
       {/* Formulario de seguimiento (solo el dueño) */}
       {isOwner && showForm && (
@@ -196,48 +177,43 @@ export default function PlantDetailPage() {
           <div>
             <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">Fecha del seguimiento</label>
             <input
-              type="date"
-              required
-              max={todayStr()}
-              value={form.date}
-              onChange={set('date')}
+              type="date" required max={todayStr()}
+              value={form.date} onChange={set('date')}
               className="w-full sm:w-48 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
             />
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div>
-              <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">📏 Tamaño (cm)</label>
-              <input
-                type="number" step="0.1" min="0" placeholder="0.0"
-                value={form.height} onChange={set('height')}
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-              />
+              <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">📏 Altura (cm)</label>
+              <input type="number" step="0.1" min="0" placeholder="0.0" value={form.height} onChange={set('height')}
+                className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
             </div>
             <div>
               <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">🍃 Hojas</label>
-              <input
-                type="number" min="0" placeholder="0"
-                value={form.leavesCount} onChange={set('leavesCount')}
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-              />
+              <input type="number" min="0" placeholder="0" value={form.leavesCount} onChange={set('leavesCount')}
+                className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
             </div>
             <div>
               <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">🌸 Flores</label>
-              <input
-                type="number" min="0" placeholder="0"
-                value={form.flowersCount} onChange={set('flowersCount')}
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-              />
+              <input type="number" min="0" placeholder="0" value={form.flowersCount} onChange={set('flowersCount')}
+                className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
             </div>
             <div>
-              <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">🥚 Huevos</label>
-              <input
-                type="number" min="0" placeholder="0"
-                value={form.eggsCount} onChange={set('eggsCount')}
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-              />
+              <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">🍅 Frutos</label>
+              <input type="number" min="0" placeholder="0" value={form.fruitsCount} onChange={set('fruitsCount')}
+                className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
             </div>
+          </div>
+
+          <div>
+            <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">Notas (opcional)</label>
+            <textarea
+              rows={2}
+              value={form.notes} onChange={set('notes')}
+              placeholder="Observaciones..."
+              className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+            />
           </div>
 
           {formError && (
@@ -251,7 +227,7 @@ export default function PlantDetailPage() {
             disabled={saving}
             className="w-full py-2.5 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-semibold rounded-lg transition-colors"
           >
-            {saving ? 'Guardando...' : `Guardar seguimiento (+${POINTS_PER_FOLLOWUP} pts)`}
+            {saving ? 'Guardando...' : `Guardar seguimiento (+${POINTS_FOLLOWUP} pts)`}
           </button>
         </form>
       )}
@@ -263,7 +239,7 @@ export default function PlantDetailPage() {
 
       {logs.length === 0 ? (
         <p className="text-sm text-gray-500 dark:text-gray-400 py-8 text-center">
-          Aún no hay observaciones. Agrega el primer seguimiento.
+          Aún no hay observaciones.
         </p>
       ) : (
         <ol className="relative border-l border-gray-200 dark:border-gray-700 ml-2">
@@ -275,7 +251,7 @@ export default function PlantDetailPage() {
                   {log.createdAt?.toDate?.().toLocaleDateString('es-CO', {
                     day: 'numeric', month: 'long', year: 'numeric',
                   }) ?? '—'}
-                  {!log.isFollowUp && (
+                  {log.isInitial && (
                     <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">
                       registro inicial
                     </span>
@@ -285,7 +261,7 @@ export default function PlantDetailPage() {
                   <span>📏 {log.height != null ? `${log.height} cm` : '—'}</span>
                   <span>🍃 {log.leavesCount ?? 0}</span>
                   <span>🌸 {log.flowersCount ?? 0}</span>
-                  <span>🥚 {log.eggsCount ?? 0}</span>
+                  <span>🍅 {log.fruitsCount ?? 0}</span>
                 </div>
                 {log.notes && (
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 italic">"{log.notes}"</p>
