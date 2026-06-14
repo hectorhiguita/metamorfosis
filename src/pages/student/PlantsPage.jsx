@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore'
+import { collection, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../../lib/firebase'
 import { useAuth } from '../../context/AuthContext'
 import { Link } from 'react-router-dom'
@@ -15,33 +15,43 @@ export default function PlantsPage() {
   const [plants, setPlants] = useState([])
   const [plantLogs, setPlantLogs] = useState({})
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     if (!user) return
     const fetchData = async () => {
-      const plantsSnap = await getDocs(
-        query(collection(db, 'plants'), where('ownerId', '==', user.uid))
-      )
-      const plantList = plantsSnap.docs.map((d) => ({ id: d.id, ...d.data() }))
-      setPlants(plantList)
+      setLoading(true)
+      setError(null)
+      try {
+        const plantsSnap = await getDocs(
+          query(collection(db, 'plants'), where('ownerId', '==', user.uid))
+        )
+        const plantList = plantsSnap.docs.map((d) => ({ id: d.id, ...d.data() }))
+        setPlants(plantList)
 
-      // Obtener último log de cada planta
-      const logsMap = {}
-      await Promise.all(
-        plantList.map(async (plant) => {
-          const snap = await getDocs(
-            query(
-              collection(db, 'logs'),
-              where('plantId', '==', plant.id),
-              orderBy('createdAt', 'desc'),
-              limit(1)
+        // Obtener último log de cada planta.
+        // Filtramos solo por plantId y ordenamos en el cliente para evitar
+        // requerir un índice compuesto (plantId + createdAt) en Firestore.
+        const logsMap = {}
+        await Promise.all(
+          plantList.map(async (plant) => {
+            const snap = await getDocs(
+              query(collection(db, 'logs'), where('plantId', '==', plant.id))
             )
-          )
-          if (!snap.empty) logsMap[plant.id] = { id: snap.docs[0].id, ...snap.docs[0].data() }
-        })
-      )
-      setPlantLogs(logsMap)
-      setLoading(false)
+            if (snap.empty) return
+            const logs = snap.docs
+              .map((d) => ({ id: d.id, ...d.data() }))
+              .sort((a, b) => (b.createdAt?.toMillis?.() ?? 0) - (a.createdAt?.toMillis?.() ?? 0))
+            logsMap[plant.id] = logs[0]
+          })
+        )
+        setPlantLogs(logsMap)
+      } catch (err) {
+        console.error('Error cargando plantas:', err)
+        setError('No se pudieron cargar las plantas. Intenta de nuevo.')
+      } finally {
+        setLoading(false)
+      }
     }
     fetchData()
   }, [user])
@@ -50,6 +60,15 @@ export default function PlantsPage() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-3 text-center">
+        <span className="text-4xl">⚠️</span>
+        <p className="text-gray-600 dark:text-gray-300">{error}</p>
       </div>
     )
   }
