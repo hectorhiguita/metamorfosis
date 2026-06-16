@@ -5,6 +5,9 @@ import Layout from './components/Layout'
 import LoginPage from './pages/LoginPage'
 import PublicDashboard from './pages/PublicDashboard'
 import InfoPage from './pages/InfoPage'
+import ConocePage from './pages/info/ConocePage'
+import JardinPage from './pages/info/JardinPage'
+import MariposasPage from './pages/info/MariposasPage'
 import DashboardPage from './pages/student/DashboardPage'
 import PlantsPage from './pages/student/PlantsPage'
 import PlantDetailPage from './pages/student/PlantDetailPage'
@@ -26,6 +29,9 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/publico" element={<PublicDashboard />} />
+      <Route path="/conoce" element={<ConocePage />} />
+      <Route path="/jardin" element={<JardinPage />} />
+      <Route path="/mariposas" element={<MariposasPage />} />
 
       {/* Rutas de estudiante */}
       <Route
